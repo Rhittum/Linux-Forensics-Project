@@ -1,18 +1,21 @@
 # Modern Linux Recovery Tool (MLRT)
 
-**MLRT (Modern Linux Recovery Tool)** is a terminal-based, Bash-scripted file recovery utility designed for modern Linux file systems like `ext4` and `xfs`. Developed as part of a B.Tech academic project, this tool demonstrates basic file recovery through deleted inode extraction, journaling, and raw data carving techniques. It leverages core utilities from **The Sleuth Kit (TSK)** and native Linux tools.
+**MLRT (Modern Linux Recovery Tool)** is a terminal-based, Bash-scripted file recovery utility designed for modern Linux file systems like `ext4`, `xfs`, and `btrfs`. Developed as part of a B.Tech academic project, this tool demonstrates file recovery through deleted inode extraction and raw data carving techniques. It leverages core utilities from **The Sleuth Kit (TSK)** and native Linux tools.
 
 ---
 
 ## Features
 
 - **Terminal UI** with ASCII art banner
-- **EXT4 File Recovery** using:
+- **Manual VM Creation** - Create and manage virtual disk images
+- **EXT4 Recovery** using:
   - Sleuth Kit tools: `fls`, `icat`, `istat`
-  - Signature-based carving with `grep` and `dd`
+  - Inode-based recovery
+  - Journal parsing with `debugfs`
 - **XFS Basic File Carving**
-- **Log Viewer** for recovery operations
-- **Safe Cleanup & Mounting Automation**
+- **BTRFS File Carving**
+- **General Text Carving** - Automatically finds and recovers any text strings
+- **Pattern-based Carving** - Search for custom patterns
 - **Bash-only implementation**
 
 ---
@@ -22,101 +25,125 @@
 - **Linux system**
 - `bash`
 - `sudo` privileges
-- `sleuthkit` tools (`fls`, `icat`, `istat`)
-- `losetup`, `mkfs.ext4`, `mkfs.xfs`, `dd`, `mount`, `umount`, etc.
-- Optional: `less` for log viewing
+- `sleuthkit` tools (`fls`, `icat`, `istat`, `debugfs`)
+- `xfsprogs` (for XFS support)
+- `btrfs-progs` (for BTRFS support)
+- `losetup`, `mkfs.ext4`, `mkfs.xfs`, `mkfs.btrfs`, `dd`, `mount`, `umount`, etc.
 
 ---
 
-## Setup & Execution
+## Quick Start
 
-1. **Clone the repository:**
+```bash
+cd scripts
+chmod +x vhd.sh mlrt.sh
+```
 
-   ```bash
-   git clone https://github.com/yourusername/mlrt.git
-   cd mlrt
+### Create a VM and test recovery
 
-2. Make the script executable:
-chmod +x recover.sh
+```bash
+# Create an ext4 image (keeps mounted for inode recovery)
+./vhd.sh create ext4 test.img 512 true
 
-3. Run the script:
-./recover.sh
+# In another terminal, run recovery while mounted
+./mlrt.sh recover test.img
 
-Script Structure
-Terminal Options
+# Unmount when done
+./vhd.sh unmount
+```
 
-    EXT4 Recovery
+### Or use standard workflow
 
-        Creates and mounts a 2GB EXT4 image.
+```bash
+# Create and mount image
+./vhd.sh create ext4 test.img
 
-        Populates with test files.
+# (Manually create/delete files in /tmp/mlrt_mount)
 
-        Deletes files to simulate recovery scenario.
+# Press Enter to unmount, then recover
+./mlrt.sh recover test.img
 
-        Uses fls, istat, icat for inode recovery.
+# View recovered files
+./mlrt.sh list
+```
 
-        Carves known patterns (e.g., 123ABCxyz) from raw disk image.
+---
 
-    XFS Recovery
+## Commands
 
-        Creates and mounts a 2GB XFS image.
+### vhd.sh - VM/Image Manager
 
-        Populates & deletes sample files.
+| Command | Description |
+|---------|-------------|
+| `./vhd.sh create <fs> [name] [size] [keep]` | Create VM image (fs: ext4/xfs/btrfs) |
+| `./vhd.sh mount <name>` | Mount existing image |
+| `./vhd.sh unmount` | Unmount current image |
+| `./vhd.sh delete <name>` | Delete image |
+| `./vhd.sh list` | List available images |
 
-        Performs byte-pattern search and dd-based carving.
+### mlrt.sh - Recovery Tool
 
-    View Logs
+| Command | Description |
+|---------|-------------|
+| `./mlrt.sh recover <image>` | Recover deleted files |
+| `./mlrt.sh list` | List recovered files |
 
-        Displays recovery_log.txt using less or cat.
+---
 
-    Exit
+## Supported Filesystems
 
-Directory Structure
+- **ext4** - Full recovery (inode + journal + carving)
+- **xfs** - Carving only (limited metadata access)
+- **btrfs** - Carving only (limited TSK support)
 
-    recover.sh – Main script
+---
 
-    recovered_output/ – Recovered files will be stored here
+## Directory Structure
 
-    recovery_log.txt – Logs of each recovery operation
+```
+scripts/
+  vhd.sh          - VM/Image creation and management
+  mlrt.sh         - Recovery tool
+  patterns.cfg    - Custom patterns for carving
 
-    fls_output.txt – Inode list from EXT4
+recovered/        - Recovered files output
+mlrt.log          - Recovery log
+```
 
-    recovered_carve_*.txt – Carved files
+---
 
-Use Cases
+## Custom Patterns
 
-    Academic demonstration of recovery principles
+Edit `patterns.cfg` to add custom carving patterns:
 
-    Basic Linux forensics
+```
+INTERSTELLAR:123ABCxyz
+RIN:Hi, my name is Rin!
+JPEG:\xFF\xD8\xFF
+```
 
-    Deleted file extraction for EXT4/XFS
+Format: `NAME:pattern`
 
-    Carving data from raw disk dumps
+---
 
-Known Limitations
+## Known Limitations
 
-    Not suitable for production use
+- Not suitable for production use
+- Inode recovery requires image to remain mounted (ext4)
+- BTRFS/XFS have limited metadata recovery support
+- Carving works best with text-based data
 
-    Carving relies on known text patterns (can be adapted)
+---
 
-    Only simple data types recovered
+## License
 
-    Limited support for complex XFS journaling recovery
+This project is open-source and intended for educational purposes only.
 
-License
+---
 
-    This project is open-source and intended for educational purposes only.
+## Credits
 
-Credits
-
-    Brian Carrier, The Sleuth Kit
-
-    IJERT Research, Deleted Files and Metadata Recovery from XFS and EXT4 File Systems
-
-    Simson Garfinkel, Digital Forensics Research
-
-    *Smart India Hackathon 2024 Problem Statements
-
-    Sabine Hossenfelder, Einstein Tile Video Inspiration
-
-    Linux man pages & kernel.org documentation
+- Brian Carrier, The Sleuth Kit
+- IJERT Research, Deleted Files and Metadata Recovery from XFS and EXT4 File Systems
+- Simson Garfinkel, Digital Forensics Research
+- Linux man pages & kernel.org documentation
