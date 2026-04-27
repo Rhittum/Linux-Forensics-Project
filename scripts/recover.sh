@@ -58,7 +58,7 @@ function create_ext4_image() {
   words=("alpha" "bravo" "charlie" "delta" "echo" "foxtrot" "golf" "hotel" "india" "juliet")
   for i in {1..100}; do
 	  word=${words[$((i % ${#words[@]}))]}
-		  echo "File $i contains the word: $word" > /mnt/test_ext4/file_$i.txt
+		  echo "File $i contains the word: $word" > $MNT/file_$i.txt
 	  done
   for i in {101..150}; do
     dd if=/dev/urandom of=$MNT/file_$i.bin bs=512 count=4 status=none
@@ -164,19 +164,19 @@ function recover_xfs() {
 	IMG="test_xfs.img"
 	dd if=/dev/zero of=$IMG bs=1M count=2048
 	mkfs.xfs -f $IMG
-	mkdir -p /mnt/test_xfs
+	mkdir -p $MNT
 	LOOP_DEV=$(sudo losetup --find --show $IMG)
-	sudo mount $LOOP_DEV /mnt/test_xfs
+	sudo mount $LOOP_DEV $MNT
 
 	echo "[+] Populating test XFS image..." | tee -a $LOG_FILE
 	for i in {1..20}; do
-		echo "XFS sample data line $i" > /mnt/test_xfs/xfs_file_$i.txt
+		echo "XFS sample data line $i" > $MNT/xfs_file_$i.txt
 	done
 	sync
-	rm -f /mnt/test_xfs/xfs_file_*.txt
+	rm -f $MNT/xfs_file_*.txt
 	sync
 
-	sudo umount /mnt/test_xfs
+	sudo umount $MNT
 	sudo losetup -d $LOOP_DEV
 
 	echo "[+] Performing carving from XFS image..." | tee -a $LOG_FILE

@@ -1,0 +1,7 @@
+node_modules/
+scripts/recovered/
+scripts/test.img
+scripts/512
+scripts/mlrt.log
+scripts/ext4_journal.txt
+scripts/fls_output.txt

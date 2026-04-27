@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MLRT - Modern Linux Recovery Tool</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <div class="logo">ML<span>RT</span></div>
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#how-it-works">How It Works</a></li>
+      <li><a href="#research">Research</a></li>
+      <li><a href="#usage">Usage</a></li>
+      <li><a href="#screenshots">Screenshots</a></li>
+    </ul>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="banner-art">
+███╗   ███╗██╗     ██████╗ ████████╗
+████╗ ████║██║     ██╔══██╗╚══██╔══╝
+██╔████╔██║██║     ██████╔╝   ██║
+██║╚██╔╝██║██║     ██╔══██╗   ██║
+██║ ╚═╝ ██║███████╗██║  ██║   ██║
+╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝   ╚═╝
+  </div>
+  <h1>Modern Linux<br>Recovery Tool</h1>
+  <p class="subtitle">
+    A Bash-based forensic file recovery utility for ext4, XFS, and Btrfs filesystems.
+    Built on The Sleuth Kit with journal-aware deleted inode extraction.
+  </p>
+  <div class="badges">
+    <span class="badge ext4">ext4</span>
+    <span class="badge xfs">XFS</span>
+    <span class="badge btrfs">Btrfs</span>
+    <span class="badge">Bash</span>
+    <span class="badge">TSK</span>
+  </div>
+  <div class="cta">
+    <a href="#how-it-works" class="btn btn-primary">How It Works</a>
+    <a href="#usage" class="btn">Quick Start</a>
+  </div>
+</section>
+
+<section id="overview">
+  <div class="section-label">Overview</div>
+  <h2>What is MLRT?</h2>
+  <p>
+    MLRT (Modern Linux Recovery Tool) is a terminal-based file recovery utility designed for modern Linux filesystems.
+    It demonstrates forensic recovery techniques through deleted inode extraction, journal analysis, and raw data carving.
+    The tool is implemented entirely in Bash and leverages core utilities from <strong>The Sleuth Kit (TSK)</strong> alongside native Linux tools.
+  </p>
+  <p>
+    The project is grounded in academic research on filesystem forensics, particularly the 2021 paper
+    <em>"Ext4 and XFS File System Forensic Framework Based on TSK"</em> by Kim et al., which derives
+    metadata changes in Ext4 journal checksum v3 and XFS v5 to build a TSK-based recovery framework.
+  </p>
+
+  <div class="diagram">
+    <div class="diagram-flow">
+      <div class="diagram-node">Disk Image</div>
+      <span class="diagram-arrow">→</span>
+      <div class="diagram-node">FS Detection</div>
+      <span class="diagram-arrow">→</span>
+      <div class="diagram-node">Metadata Analysis</div>
+      <span class="diagram-arrow">→</span>
+      <div class="diagram-node">Journal Parse</div>
+      <span class="diagram-arrow">→</span>
+      <div class="diagram-node">Inode Recovery</div>
+      <span class="diagram-arrow">→</span>
+      <div class="diagram-node">Data Carving</div>
+      <span class="diagram-arrow">→</span>
+      <div class="diagram-node">Recovered Files</div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="section-label">Features</div>
+  <h2>Recovery Capabilities</h2>
+  <div class="grid grid-3">
+    <div class="card">
+      <div class="icon">🔍</div>
+      <h3>Metadata Inode Recovery</h3>
+      <p>Uses TSK tools (fls, istat, icat) to find and extract deleted file inodes from filesystem metadata structures.</p>
+    </div>
+    <div class="card">
+      <div class="icon">📋</div>
+      <h3>Journal-Based Recovery</h3>
+      <p>Parses the Ext4 journal with checksum V3 awareness. Extracts deleted inodes backed up in transaction data blocks.</p>
+    </div>
+    <div class="card">
+      <div class="icon">🔎</div>
+      <h3>General Text Carving</h3>
+      <p>Automatically extracts all readable strings from the raw disk image and recovers text data at discovered offsets.</p>
+    </div>
+    <div class="card">
+      <div class="icon">🎯</div>
+      <h3>Pattern-Based Carving</h3>
+      <p>Searches for custom file signatures and patterns defined in patterns.cfg, carving matching blocks from raw data.</p>
+    </div>
+    <div class="card">
+      <div class="icon">⚙️</div>
+      <h3>Auto FS Detection</h3>
+      <p>Automatically detects ext4, XFS, and Btrfs filesystems and applies the appropriate recovery strategy.</p>
+    </div>
+    <div class="card">
+      <div class="icon">🖥️</div>
+      <h3>VM Image Management</h3>
+      <p>Companion script (vhd.sh) for creating, mounting, and managing virtual disk images for testing and education.</p>
+    </div>
+  </div>
+</section>
+
+<section id="how-it-works">
+  <div class="section-label">How It Works</div>
+  <h2>Recovery Pipeline</h2>
+  <p>MLRT executes recovery in sequential phases, each targeting a different layer of data persistence on disk.</p>
+
+  <div class="phases">
+    <div class="phase">
+      <div>
+        <h3>Metadata Inode Recovery</h3>
+        <p>
+          Runs <code>fls -rd</code> to enumerate all entries including deleted ones. For each candidate inode,
+          <code>istat</code> verifies the deleted flag, then <code>icat</code> extracts the file content.
+          This recovers files whose inode metadata remains intact but whose directory entries were removed.
+        </p>
+      </div>
+    </div>
+    <div class="phase">
+      <div>
+        <h3>Journal-Based Recovery (Checksum V3 Aware)</h3>
+        <p>
+          The Ext4 journal is allocated at inode 8. MLRT parses the journal superblock to verify the magic number
+          <code>0xC03B3998</code> and reads the <code>s_feature_incompat</code> flag to determine whether the
+          descriptor format is V2 or V3 (CSUM_V3). The full journal is dumped via <code>debugfs logdump -a</code>,
+          then transaction descriptors and data blocks are analyzed to locate deleted inode backups. When multiple
+          backups of the same inode exist, the most recent is selected by comparing <code>a_time</code> values.
+        </p>
+      </div>
+    </div>
+    <div class="phase">
+      <div>
+        <h3>General Text Carving</h3>
+        <p>
+          Extracts all strings of 8+ characters using <code>strings</code>, then for each unique string,
+          <code>grep -aEbo</code> locates its byte offset in the raw image. Data is carved at each offset
+          using <code>dd</code>. This catches any surviving text regardless of filesystem structures.
+        </p>
+      </div>
+    </div>
+    <div class="phase">
+      <div>
+        <h3>Pattern-Based Carving</h3>
+        <p>
+          Loads regex patterns from <code>patterns.cfg</code> (format: <code>NAME:pattern</code>),
+          searches the raw image with <code>grep -aEabo</code>, and carves 512-byte blocks at each
+          match offset. Useful for recovering files by signature (e.g., JPEG headers, custom markers).
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin-top: 2.5rem;">Filesystem-Specific Behavior</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Filesystem</th>
+          <th>Inode Recovery</th>
+          <th>Journal Recovery</th>
+          <th>Text Carving</th>
+          <th>Pattern Carving</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>ext4</strong></td>
+          <td class="highlight">Yes</td>
+          <td class="highlight">Yes (CSUM_V3)</td>
+          <td class="highlight">Yes</td>
+          <td class="highlight">Yes</td>
+        </tr>
+        <tr>
+          <td><strong>XFS</strong></td>
+          <td>No</td>
+          <td>No</td>
+          <td class="highlight">Yes</td>
+          <td class="highlight">Yes</td>
+        </tr>
+        <tr>
+          <td><strong>Btrfs</strong></td>
+          <td>No</td>
+          <td>No</td>
+          <td class="highlight">Yes</td>
+          <td class="highlight">Yes</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="research">
+  <div class="section-label">Research</div>
+  <h2>Academic Foundation</h2>
+  <p>
+    MLRT is based on the research paper <strong>"Ext4 and XFS File System Forensic Framework Based on TSK"</strong>
+    by Hyungchan Kim, Sungbum Kim, Yeonghun Shin, Wooyeon Jo, Seokjun Lee, and Taeshik Shon (2021),
+    published in <em>Electronics</em>, 10(18), 2310.
+  </p>
+
+  <h3>Key Findings from the Paper</h3>
+  <ul class="inline-list">
+    <li><strong>Filesystem evolution impacts forensics</strong> — Metadata structures change with version updates (Ext4 journal CSUM_V3, XFS v5), breaking older recovery tools.</li>
+    <li><strong>TSK limitations</strong> — The Sleuth Kit lacks native journal-based recovery for Ext4 and does not support XFS, leaving gaps in forensic investigations.</li>
+    <li><strong>Journal analysis is critical</strong> — Ext4's ordered-mode journaling backs up inode metadata in journal data blocks, enabling recovery of deleted files even after directory entries are removed.</li>
+    <li><strong>XFS v5 metadata changes</strong> — New fields (CRC, UUID) were added for integrity, requiring updated parsing logic for inode extraction.</li>
+  </ul>
+
+  <h3 style="margin-top: 2rem;">How MLRT Implements the Research</h3>
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>Ext4 Journal Recovery</h3>
+      <p>
+        The paper describes parsing the journal superblock's <code>s_feature_incompat</code> flag to determine
+        descriptor block format. MLRT implements this by reading the flag at offset 40 in the journal superblock,
+        checking bit 4 (0x10) for CSUM_V3. Deleted inodes are extracted from journal data blocks using
+        <code>debugfs logdump -a</code> and <code>icat</code>.
+      </p>
+    </div>
+    <div class="card">
+      <h3>XFS Metadata Analysis</h3>
+      <p>
+        The paper details XFS v5 metadata structures: superblock, inode core (176 bytes vs 96 in v4),
+        directory entries (shortform/block/node/B+tree), and data extents. MLRT currently uses carving-only
+        for XFS due to limited TSK CLI support, but the research provides the blueprint for full metadata-based extraction.
+      </p>
+    </div>
+  </div>
+
+  <h3 style="margin-top: 2rem;">Comparison with Commercial Tools</h3>
+  <p>The paper compared the proposed framework against TSK, UFS Explorer, and R-Studio across 1 GB and 100 GB datasets:</p>
+  <div class="table-wrap" style="margin-top: 1rem;">
+    <table>
+      <thead>
+        <tr>
+          <th>Dataset</th>
+          <th>TSK (REC/ACY)</th>
+          <th>UFS Explorer (REC/ACY)</th>
+          <th>R-Studio (REC/ACY)</th>
+          <th>Proposed Framework (REC/ACY)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Ext4 1GB_after</td>
+          <td>79 / 53</td>
+          <td>85 / 77</td>
+          <td>56 / 56</td>
+          <td class="highlight">100 / 99</td>
+        </tr>
+        <tr>
+          <td>Ext4 100GB_after</td>
+          <td>53 / 50</td>
+          <td>100 / 79</td>
+          <td>88 / 74</td>
+          <td class="highlight">99 / 50</td>
+        </tr>
+        <tr>
+          <td>XFS 1GB_after</td>
+          <td>Unsupported</td>
+          <td>52 / 0*</td>
+          <td>94 / 0**</td>
+          <td class="highlight">52 / 52</td>
+        </tr>
+        <tr>
+          <td>XFS 100GB_after</td>
+          <td>Unsupported</td>
+          <td>52 / 0*</td>
+          <td>91 / 0**</td>
+          <td class="highlight">52 / 52</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+    * hash value not matched &nbsp; ** hash value and filename not matched &nbsp; REC = Recovery Rate (%) &nbsp; ACY = Accuracy (%)
+  </p>
+</section>
+
+<section id="usage">
+  <div class="section-label">Usage</div>
+  <h2>Quick Start</h2>
+
+  <h3>Requirements</h3>
+  <ul class="inline-list" style="margin-bottom: 1.5rem;">
+    <li>Linux system with Bash</li>
+    <li>Sleuth Kit (<code>fls</code>, <code>istat</code>, <code>icat</code>, <code>debugfs</code>)</li>
+    <li><code>xfsprogs</code> for XFS, <code>btrfs-progs</code> for Btrfs</li>
+    <li>Standard utilities: <code>dd</code>, <code>losetup</code>, <code>mount</code>, <code>strings</code>, <code>xxd</code></li>
+  </ul>
+
+  <h3>Create a Test Image and Recover</h3>
+  <pre><code># Create an ext4 image (keeps mounted for inode recovery)
+./vhd.sh create ext4 test.img 512 true
+
+# Copy files to /tmp/mlrt_mount, then delete some
+
+# Run recovery (in another terminal)
+./mlrt.sh recover test.img
+
+# List recovered files
+./mlrt.sh list</code></pre>
+
+  <h3>Recovery Output</h3>
+  <p>Recovered files are stored in the <code>./recovered/</code> directory:</p>
+  <div class="table-wrap" style="margin-top: 1rem;">
+    <table>
+      <thead>
+        <tr>
+          <th>File Pattern</th>
+          <th>Recovery Method</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>inode_*.dat</code></td>
+          <td>Metadata inode extraction (TSK)</td>
+        </tr>
+        <tr>
+          <td><code>journal_recovered_inode_*.dat</code></td>
+          <td>Journal data block extraction</td>
+        </tr>
+        <tr>
+          <td><code>journal_version.txt</code></td>
+          <td>Detected journal checksum version (CSUM_V2/CSUM_V3)</td>
+        </tr>
+        <tr>
+          <td><code>journal_full.txt</code></td>
+          <td>Full debugfs journal dump</td>
+        </tr>
+        <tr>
+          <td><code>text_*.dat</code></td>
+          <td>General text carving</td>
+        </tr>
+        <tr>
+          <td><code>carve_*.bin</code></td>
+          <td>Pattern-based carving</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="margin-top: 2rem;">Custom Patterns</h3>
+  <p>Edit <code>patterns.cfg</code> to define file signatures for carving:</p>
+  <pre><code>INTERSTELLAR:123ABCxyz
+RIN:Hi, my name is Rin!
+JPEG:\xFF\xD8\xFF</code></pre>
+  <p>Format: <code>NAME:regex_pattern</code></p>
+</section>
+
+<section id="screenshots">
+  <div class="section-label">Screenshots</div>
+  <h2>In Action</h2>
+  <div class="screenshots-grid">
+    <img src="screenshots/Screenshot from 2025-04-25 21-08-03.png" alt="MLRT Banner">
+    <img src="screenshots/Screenshot from 2025-04-25 21-09-23.png" alt="Recovery Process">
+    <img src="screenshots/Screenshot from 2025-04-25 23-08-52.png" alt="Journal Recovery">
+    <img src="screenshots/Screenshot from 2025-04-25 23-59-22.png" alt="Inode Recovery">
+    <img src="screenshots/Screenshot from 2025-04-25 23-59-27.png" alt="File Carving">
+    <img src="screenshots/Screenshot from 2025-04-26 11-34-04.png" alt="Recovery Output">
+    <img src="screenshots/Screenshot from 2025-04-26 11-35-01.png" alt="List Recovered Files">
+  </div>
+</section>
+
+<section id="technical">
+  <div class="section-label">Technical Details</div>
+  <h2>Ext4 Journal Structure</h2>
+  <p>
+    The Ext4 journal is a critical forensic resource. When a file is deleted, its inode metadata may be
+    backed up in the journal area before the deletion is committed. MLRT analyzes three key structures:
+  </p>
+
+  <div class="step">
+    <h3>Journal Superblock (Inode 8)</h3>
+    <p>
+      Located at the journal's first block. Starts with magic number <code>0xC03B3998</code>.
+      Contains the <code>s_feature_incompat</code> flag at offset 40 — bit 4 (0x10) indicates
+      CSUM_V3 descriptor format. MLRT reads this via <code>dd</code> + <code>xxd</code> to determine parsing strategy.
+    </p>
+  </div>
+  <div class="step">
+    <h3>Journal Descriptor Block</h3>
+    <p>
+      Contains an array of block tags, each describing a journal data block. The tag structure differs
+      between V2 and V3: V3 adds checksum fields. The <code>t_blocknr</code> field indicates where the
+      data block is stored on disk, linking to the deleted file's inode.
+    </p>
+  </div>
+  <div class="step">
+    <h3>Journal Data Block</h3>
+    <p>
+      Stores the actual backed-up inode metadata of deleted files. MLRT extracts these by matching
+      descriptor block entries with deleted inode numbers, then recovers the inode data using <code>icat</code>.
+    </p>
+  </div>
+
+  <h3 style="margin-top: 2.5rem;">Why XFS/Btrfs Are Carving-Only</h3>
+  <p>
+    The Sleuth Kit does not natively support XFS or Btrfs for metadata-based recovery. While the research
+    paper describes full metadata analysis for XFS v5 (superblock parsing, inode core extraction at 176 bytes,
+    directory entry traversal, data extent bit-shifting), implementing this requires extending TSK's C codebase.
+    MLRT provides carving as a practical fallback while documenting the metadata approach for future expansion.
+  </p>
+</section>
+
+<footer>
+  <div class="inner">
+    <p>
+      MLRT - Modern Linux Recovery Tool &middot; Educational project based on
+      <a href="https://doi.org/10.3390/electronics10182310" target="_blank">Kim et al. (2021)</a>
+    </p>
+    <p style="margin-top: 0.5rem;">
+      Credits: Brian Carrier (The Sleuth Kit) &middot; Linux kernel documentation &middot; e2fsprogs
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>
