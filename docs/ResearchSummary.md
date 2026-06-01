@@ -23,19 +23,34 @@ The paper emphasizes several critical points relevant to this project:
 
 Our project aligns with the research paper in the following ways:
 
+<<<<<<< HEAD
 * It utilizes TSK tools (`fls`, `icat`, `istat`) to perform metadata-based file recovery.
 * **Implements journal-based recovery** that parses the Ext4 journal superblock (inode 8) to detect the magic number `0xC03B3998` and reads the `s_feature_incompat` flag to determine journal descriptor format (V2 vs V3 / CSUM_V3).
 * Recovers deleted inodes from journal data blocks backed up during ordered-mode journaling transactions.
 * When multiple inode backups exist in the journal, selects the most recent based on `a_time` comparison (as proposed in the paper).
 * Includes general text carving and pattern-based carving as fallback techniques.
+=======
+* It utilizes TSK tools (`fls`, `icat`, `istat`) to perform file recovery, demonstrating the fundamental principles of metadata-based recovery.
+* It includes journal parsing using `debugfs` for Ext4.
+* It acknowledges the challenges of file recovery by simulating scenarios where deletion is performed, leaving room for more complex recovery.
+* It adds general text carving as a fallback when inode recovery is unreliable.
+>>>>>>>
 
 ## Project Divergence from Research
 
 However, our project also diverges from the research paper in several key aspects:
 
+<<<<<<< HEAD
 * **Bash-based implementation:** The paper proposes a C-based TSK framework extension; we implement the logic in Bash using existing TSK CLI tools and `debugfs`.
 * **Limited XFS/BTRFS Scope:** Our project uses carving-only for XFS and BTRFS due to limited TSK support, rather than full metadata analysis.
 * **Manual Workflow:** Unlike automated frameworks, we use a manual VM creation approach for educational purposes.
 * **No direct block-level journal parsing:** We rely on `debugfs logdump -a` for journal extraction rather than raw block parsing of descriptor/data blocks.
 
 In conclusion, this project provides a valuable educational demonstration of file recovery principles using TSK and data carving. It incorporates key findings from the Kim et al. paper on Ext4 journal checksum V3 handling and journal-based inode recovery, while maintaining a simplified Bash implementation with clear limitations and potential for future expansion.
+=======
+* **Simplified Journal Implementation:** Our project performs basic journal dumps but does not implement full journal-based recovery reconstruction.
+* **Limited XFS/BTRFS Scope:** Our project uses carving-only for XFS and BTRFS due to limited TSK support, rather than full metadata analysis.
+* **Manual Workflow:** Unlike automated frameworks, we use a manual VM creation approach for educational purposes.
+
+In conclusion, this project provides a valuable educational demonstration of file recovery principles using TSK and data carving. It is inspired by the challenges and solutions presented in current digital forensics research but represents a simplified implementation with clear limitations and potential for future expansion.
+>>>>>>>

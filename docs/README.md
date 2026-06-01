@@ -1,4 +1,4 @@
-# Modern Linux Recovery Tool (MLRT)
+# Moder  Linux Recovery Tool (MLRT)
 
 **MLRT (Modern Linux Recovery Tool)** is a terminal-based, Bash-scripted file recovery utility designed for modern Linux file systems like `ext4`, `xfs`, and `btrfs`. Developed as part of a B.Tech academic project, this tool demonstrates file recovery through deleted inode extraction and raw data carving techniques. It leverages core utilities from **The Sleuth Kit (TSK)** and native Linux tools.
 
@@ -10,9 +10,13 @@
 - **Manual VM Creation** - Create and manage virtual disk images
 - **EXT4 Recovery** using:
   - Sleuth Kit tools: `fls`, `icat`, `istat`
+<<<<<<< HEAD
   - Metadata-based inode recovery
   - **Journal-based recovery** (supports checksum V3 via `s_feature_incompat` parsing)
   - Deleted inode extraction from journal data blocks
+=======
+  - Inode-based recovery
+>>>>>>>
   - Journal parsing with `debugfs`
 - **XFS Basic File Carving**
 - **BTRFS File Carving**
@@ -94,7 +98,11 @@ chmod +x vhd.sh mlrt.sh
 
 ## Supported Filesystems
 
+<<<<<<< HEAD
 - **ext4** - Full recovery (metadata inodes + journal checksum V3 + carving)
+=======
+- **ext4** - Full recovery (inode + journal + carving)
+>>>>>>>
 - **xfs** - Carving only (limited metadata access)
 - **btrfs** - Carving only (limited TSK support)
 

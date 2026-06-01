@@ -34,6 +34,7 @@ function load_patterns() {
 	done < "$PATTERNS_FILE"
 }
 
+<<<<<<< HEAD
 function check_tsk_tools() {
 	local missing=0
 	for tool in fls istat icat; do
@@ -173,6 +174,8 @@ function recover_ext4_journal() {
 	echo "[+] Journal recovery complete: found $journal_found deleted inodes, recovered $journal_recovered" | tee -a "$LOG_FILE"
 }
 
+=======
+>>>>>>>
 function recover_ext4() {
 	local img=$1
 
@@ -180,7 +183,11 @@ function recover_ext4() {
 
 	load_patterns
 
+<<<<<<< HEAD
 	echo "[+] Phase 1: Finding deleted inodes via metadata..." | tee -a "$LOG_FILE"
+=======
+	echo "[+] Finding deleted inodes..." | tee -a "$LOG_FILE"
+>>>>>>>
 	fls -rd "$img" > fls_output.txt 2>/dev/null || true
 
 	local recovered=0
@@ -201,12 +208,18 @@ function recover_ext4() {
 		fi
 	done < fls_output.txt
 
+<<<<<<< HEAD
 	echo "[+] Recovered $recovered files via metadata inodes" | tee -a "$LOG_FILE"
 
 	echo "[+] Phase 2: Journal-based recovery (checksum v3 aware)..." | tee -a "$LOG_FILE"
 	recover_ext4_journal "$img"
 
 	echo "[+] Phase 3: General text carving..." | tee -a "$LOG_FILE"
+=======
+	echo "[+] Recovered $recovered files via inodes" | tee -a "$LOG_FILE"
+
+	echo "[+] General text carving (searching for strings)..." | tee -a "$LOG_FILE"
+>>>>>>>
 	strings -n 8 "$img" | sort -u | head -100 | while read -r line; do
 		escaped=$(printf '%s' "$line" | sed 's/[[\.*^$/&\\&]/\\&/g')
 		offset=$(grep -aEbo "$escaped" "$img" 2>/dev/null | head -1 | cut -d: -f1)
@@ -217,7 +230,11 @@ function recover_ext4() {
 		fi
 	done
 
+<<<<<<< HEAD
 	echo "[+] Phase 4: Pattern-based carving..." | tee -a "$LOG_FILE"
+=======
+	echo "[+] Pattern-based carving..." | tee -a "$LOG_FILE"
+>>>>>>>
 	for key in "${!PATTERNS[@]}"; do
 		expr="${PATTERNS[$key]}"
 		echo "    Searching: $key" | tee -a "$LOG_FILE"
@@ -227,6 +244,12 @@ function recover_ext4() {
 		done
 	done
 
+<<<<<<< HEAD
+=======
+	echo "[+] Parsing journal..." | tee -a "$LOG_FILE"
+	debugfs "$img" -R "logdump" 2>/dev/null > ext4_journal.txt || echo "    (no journal data)" | tee -a "$LOG_FILE"
+
+>>>>>>>
 	echo "[+] EXT4 recovery complete" | tee -a "$LOG_FILE"
 }
 
